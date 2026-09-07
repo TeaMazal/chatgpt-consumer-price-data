@@ -1,0 +1,53 @@
+name: Refresh consumer prices
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 19 * * *"
+  push:
+    branches: [main]
+    paths:
+      - "collect-web-prices.mjs"
+      - "web-collector-utils.mjs"
+      - "price-utils.mjs"
+      - "data-loader.mjs"
+      - "tests.mjs"
+      - ".github/workflows/refresh-prices.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-consumer-prices
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Collect official consumer prices
+        run: node collect-web-prices.mjs
+
+      - name: Validate snapshot
+        run: node tests.mjs
+
+      - name: Publish changed snapshot
+        run: |
+          if git diff --quiet -- data/live-prices.json; then
+            echo "Price snapshot is unchanged."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/live-prices.json
+          git commit -m "data: refresh consumer prices"
+          git push

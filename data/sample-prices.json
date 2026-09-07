@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "mode": "demo",
+  "provider": "OpenAI",
+  "plan": {
+    "id": "chatgpt-plus",
+    "name": "ChatGPT Plus",
+    "billingPeriod": "month",
+    "billingUnit": "account"
+  },
+  "priceUpdatedAt": "2026-09-07T10:00:00+08:00",
+  "fx": {
+    "base": "CNY",
+    "usdToCny": 7.12,
+    "updatedAt": "2026-09-07T09:00:00+08:00",
+    "source": "演示汇率"
+  },
+  "rows": [
+    { "countryCode": "TR", "countryName": "土耳其", "currencyCode": "TRY", "amountMajor": 499.99, "minorUnitExponent": 2, "cnyPerUnit": 0.176, "taxTreatment": "included", "taxRatePercent": 20, "status": "demo" },
+    { "countryCode": "BR", "countryName": "巴西", "currencyCode": "BRL", "amountMajor": 99.9, "minorUnitExponent": 2, "cnyPerUnit": 1.3, "taxTreatment": "included", "taxRatePercent": null, "status": "demo" },
+    { "countryCode": "PH", "countryName": "菲律宾", "currencyCode": "PHP", "amountMajor": 1100, "minorUnitExponent": 2, "cnyPerUnit": 0.126, "taxTreatment": "included", "taxRatePercent": 12, "status": "demo" },
+    { "countryCode": "CA", "countryName": "加拿大", "currencyCode": "CAD", "amountMajor": 27, "minorUnitExponent": 2, "cnyPerUnit": 5.24, "taxTreatment": "unknown", "taxRatePercent": null, "status": "demo" },
+    { "countryCode": "US", "countryName": "美国", "currencyCode": "USD", "amountMajor": 20, "minorUnitExponent": 2, "cnyPerUnit": 7.12, "taxTreatment": "unknown", "taxRatePercent": null, "status": "demo" },
+    { "countryCode": "NG", "countryName": "尼日利亚", "currencyCode": "NGN", "amountMajor": 31000, "minorUnitExponent": 2, "cnyPerUnit": 0.0046, "taxTreatment": "unknown", "taxRatePercent": null, "status": "demo" },
+    { "countryCode": "JP", "countryName": "日本", "currencyCode": "JPY", "amountMajor": 3000, "minorUnitExponent": 0, "cnyPerUnit": 0.049, "taxTreatment": "excluded", "taxRatePercent": 10, "status": "demo" },
+    { "countryCode": "KR", "countryName": "韩国", "currencyCode": "KRW", "amountMajor": 29000, "minorUnitExponent": 0, "cnyPerUnit": 0.00518, "taxTreatment": "included", "taxRatePercent": 10, "status": "demo" },
+    { "countryCode": "AU", "countryName": "澳大利亚", "currencyCode": "AUD", "amountMajor": 32.99, "minorUnitExponent": 2, "cnyPerUnit": 4.65, "taxTreatment": "included", "taxRatePercent": 10, "status": "demo" },
+    { "countryCode": "IN", "countryName": "印度", "currencyCode": "INR", "amountMajor": 1999, "minorUnitExponent": 2, "cnyPerUnit": 0.083, "taxTreatment": "excluded", "taxRatePercent": 18, "status": "demo" },
+    { "countryCode": "GB", "countryName": "英国", "currencyCode": "GBP", "amountMajor": 19.99, "minorUnitExponent": 2, "cnyPerUnit": 9.35, "taxTreatment": "included", "taxRatePercent": 20, "status": "demo" },
+    { "countryCode": "DE", "countryName": "德国", "currencyCode": "EUR", "amountMajor": 22.99, "minorUnitExponent": 2, "cnyPerUnit": 8.36, "taxTreatment": "included", "taxRatePercent": 19, "status": "demo" }
+  ]
+}

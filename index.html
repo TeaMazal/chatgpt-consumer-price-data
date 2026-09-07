@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f5f7fb" />
+    <title>价格雷达 · 全球订阅价格</title>
+    <link rel="icon" type="image/png" href="../site-avatar.png" />
+    <link rel="stylesheet" href="./styles.css?v=live3" />
+    <script src="../bot-service/static/lucide.min.js" defer></script>
+    <script type="module" src="./app.mjs?v=local-pipeline1"></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="../" aria-label="返回商品中心">
+          <span class="brand-mark"><i data-lucide="radar"></i></span>
+          <span class="brand-copy"><strong>价格雷达</strong><small>全球订阅价格</small></span>
+        </a>
+        <nav class="nav" aria-label="价格雷达导航">
+          <a class="active" href="#ranking">价格排行</a>
+          <a href="#methodology">数据说明</a>
+        </nav>
+        <div class="top-actions">
+          <span class="source-state live" id="sourceState"><i></i><span>真实数据</span></span>
+          <button class="icon-button" id="refreshButton" type="button" title="刷新真实数据" aria-label="刷新真实数据">
+            <i data-lucide="refresh-cw"></i>
+          </button>
+        </div>
+      </header>
+
+      <main>
+        <section class="page-heading" aria-labelledby="pageTitle">
+          <div>
+            <p class="eyebrow">GLOBAL SUBSCRIPTION PRICES</p>
+            <h1 id="pageTitle">官方价格，换算后一眼看清</h1>
+            <p>比较不同国家和地区的订阅标价、汇率换算与税费口径。</p>
+          </div>
+          <div class="updated-block">
+            <span>数据更新时间</span>
+            <strong id="priceUpdatedAt">--</strong>
+            <small id="fxUpdatedAt">汇率 --</small>
+          </div>
+        </section>
+
+        <section class="demo-notice real" aria-label="数据状态">
+          <i data-lucide="badge-check"></i>
+          <div><strong id="noticeTitle">官方渠道数据</strong><span id="noticeBody">价格来自 OpenAI 官方公开页面，汇率来自欧洲央行。</span></div>
+          <span class="notice-tag" id="noticeTag">可核验来源</span>
+        </section>
+
+        <section class="control-band" aria-label="价格筛选">
+          <div class="control-group platform-group">
+            <span class="control-label">平台</span>
+            <div class="segmented" id="platformTabs" role="group" aria-label="平台">
+              <button class="active" type="button" data-platform="openai"><span class="platform-dot openai-dot"></span>GPT</button>
+              <button type="button" data-platform="anthropic"><span class="platform-dot claude-dot"></span>Claude<small>待接入</small></button>
+            </div>
+          </div>
+          <label class="control-group plan-control">
+            <span class="control-label">订阅套餐</span>
+            <span class="select-wrap"><i data-lucide="layers-3"></i><select id="planSelect" aria-label="订阅套餐"></select><i data-lucide="chevron-down"></i></span>
+          </label>
+          <div class="control-group">
+            <span class="control-label">显示货币</span>
+            <div class="segmented compact" id="currencyTabs" role="group" aria-label="显示货币">
+              <button class="active" type="button" data-currency="CNY">人民币</button>
+              <button type="button" data-currency="USD">美元</button>
+            </div>
+          </div>
+          <div class="control-group basis-control">
+            <span class="control-label">排行口径</span>
+            <div class="segmented compact" id="basisTabs" role="group" aria-label="排行口径">
+              <button class="active" type="button" data-basis="listed">标价换算</button>
+              <button type="button" data-basis="taxed">含税估算</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="summary-strip" aria-label="价格摘要">
+          <div><span>当前最低</span><strong id="lowestPrice">--</strong><small id="lowestCountry">--</small></div>
+          <div><span id="referenceLabel">美国基准</span><strong id="referencePrice">--</strong><small id="referenceMeta">--</small></div>
+          <div><span>最低价差</span><strong class="saving" id="savingPercent">--</strong><small id="savingMeta">相对美国标价</small></div>
+          <div><span>覆盖地区</span><strong id="regionCount">--</strong><small id="currencyCount">-- 种结算币种</small></div>
+        </section>
+
+        <section class="radar-layout" id="ranking">
+          <div class="ranking-section">
+            <div class="section-head">
+              <div><p class="eyebrow">PRICE RANKING</p><h2>全球价格排行</h2><span id="resultCount">--</span></div>
+              <div class="list-tools">
+                <label class="search-box"><i data-lucide="search"></i><input id="searchInput" type="search" placeholder="搜索国家或币种" autocomplete="off" /><button id="clearSearch" type="button" title="清空搜索" aria-label="清空搜索"><i data-lucide="x"></i></button></label>
+                <label class="select-wrap small"><span class="sr-only">税费筛选</span><i data-lucide="receipt-text"></i><select id="taxFilter"><option value="all">全部税费</option><option value="included">含税价</option><option value="excluded">未含税</option><option value="unknown">结账确认</option></select><i data-lucide="chevron-down"></i></label>
+              </div>
+            </div>
+
+            <div class="table-wrap">
+              <div class="price-table" role="table" aria-label="全球订阅价格">
+                <div class="table-header" role="row">
+                  <span role="columnheader">排名 / 地区</span>
+                  <span role="columnheader">官方原价</span>
+                  <span role="columnheader">汇率换算</span>
+                  <span role="columnheader">含税预计</span>
+                  <span role="columnheader">对比美国</span>
+                  <span role="columnheader">价格来源</span>
+                </div>
+                <div id="priceRows" class="table-body"></div>
+              </div>
+              <div class="empty-state" id="emptyState" hidden><i data-lucide="search-x"></i><strong>没有匹配的地区</strong><span>请更换搜索条件。</span></div>
+            </div>
+          </div>
+
+          <aside class="insight-panel" aria-labelledby="insightTitle">
+            <div class="insight-head"><p class="eyebrow">QUICK VIEW</p><h2 id="insightTitle">价格分布</h2><span>前 6 个低价地区</span></div>
+            <div class="bar-chart" id="barChart"></div>
+            <div class="unit-audit">
+              <div class="unit-audit-title"><i data-lucide="shield-check"></i><strong>单位核对</strong></div>
+              <dl>
+                <div><dt>计费周期</dt><dd>每月</dd></div>
+                <div><dt>计费对象</dt><dd>每账号</dd></div>
+                <div><dt>金额字段</dt><dd>主货币单位</dd></div>
+                <div><dt>日元小数位</dt><dd>0 位</dd></div>
+                <div><dt>美元小数位</dt><dd>2 位</dd></div>
+              </dl>
+            </div>
+          </aside>
+        </section>
+
+        <section class="methodology" id="methodology" aria-labelledby="methodologyTitle">
+          <div><p class="eyebrow">DATA METHOD</p><h2 id="methodologyTitle">数据口径</h2></div>
+          <div class="method-list">
+            <div><i data-lucide="badge-dollar-sign"></i><span><strong>官方原价</strong><small>保留官方公开页面的币种和主单位金额</small></span></div>
+            <div><i data-lucide="repeat-2"></i><span><strong>汇率换算</strong><small>原币金额 × 人民币中间汇率</small></span></div>
+            <div><i data-lucide="landmark"></i><span><strong>税费口径</strong><small>仅使用接口明确提供的税率与含税状态</small></span></div>
+            <div><i data-lucide="clock-3"></i><span><strong>渠道不混用</strong><small>Web 与 iOS 价格按套餐明确标记</small></span></div>
+          </div>
+        </section>
+      </main>
+
+      <footer>
+        <span>搜索价格雷达 · 真实数据本地版</span>
+        <span>实际价格、税费和地区资格以官方结账页为准</span>
+      </footer>
+    </div>
+  </body>
+</html>
