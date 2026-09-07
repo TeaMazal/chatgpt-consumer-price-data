@@ -10,7 +10,7 @@ import {
   taxedCny,
   validateSnapshot,
 } from "./price-utils.mjs";
-import { buildWebSnapshot } from "./web-collector-utils.mjs";
+import { buildWebSnapshot, retainFailedRows } from "./web-collector-utils.mjs";
 
 const snapshot = validateSnapshot(JSON.parse(await readFile(new URL("./data/live-prices.json", import.meta.url), "utf8")));
 const plus = snapshot.plans.find((plan) => plan.id === "chatgpt-plus");
@@ -90,6 +90,28 @@ assert.equal(webPlusJp.taxRatePercent, 10, "明确税率应保留");
 assert.equal(webPlusJp.minorUnitExponent, 0, "日元金额不得增加小数位");
 assert.equal(webSnapshot.collectionScope.reachable, 3, "采集范围应等于成功配置数量");
 assert.equal(webPlusUs.cnyPerUnit, 7.09090909, "ECB 交叉汇率换算应正确");
+
+const partialSnapshot = buildWebSnapshot([
+  webConfig("US", "USD", 2, null, {
+    go: { amount: 8, tax: "exclusive" },
+    plus: { amount: 20, tax: "exclusive" },
+    prolite: { amount: 100, tax: "exclusive" },
+    pro: { amount: 200, tax: "exclusive" },
+  }),
+  webConfig("JP", "JPY", 0, 10, {
+    go: { amount: 1400, tax: "inclusive" },
+    plus: { amount: 3000, tax: "inclusive" },
+    prolite: { amount: 16800, tax: "inclusive" },
+    pro: { amount: 30000, tax: "inclusive" },
+  }),
+], {
+  base: "EUR", date: "2026-09-04", rates: { CNY: 7.8, USD: 1.1, JPY: 180, AUD: 1.7 },
+}, {
+  result: "success", time_last_update_utc: "Mon, 07 Sep 2026 00:02:31 +0000", rates: { CNY: 7.1, USD: 1, JPY: 164, AUD: 1.55 },
+}, collectedAt, { requested: 3, failed: 1 });
+const retainedSnapshot = retainFailedRows(partialSnapshot, webSnapshot, ["AU"]);
+assert.equal(retainedSnapshot.plans.find((plan) => plan.id === "chatgpt-plus").rows.length, 3, "临时失败地区应沿用上一份官方价格");
+assert.equal(retainedSnapshot.collectionScope.retained, 1, "应记录沿用的地区数量");
 
 console.log("真实价格、套餐映射、汇率与单位测试通过");
 

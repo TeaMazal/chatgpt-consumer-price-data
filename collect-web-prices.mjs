@@ -1,10 +1,11 @@
-import { writeFile } from "node:fs/promises";
-import { buildWebSnapshot } from "./web-collector-utils.mjs";
+import { readFile, writeFile } from "node:fs/promises";
+import { buildWebSnapshot, retainFailedRows } from "./web-collector-utils.mjs";
 import { ECB_RATE_URL, FALLBACK_RATE_URL } from "./data-loader.mjs";
 import { validateSnapshot } from "./price-utils.mjs";
 
 const CONFIG_URL = "https://chatgpt.com/backend-anon/checkout_pricing_config/configs";
 const outputUrl = new URL("./data/live-prices.json", import.meta.url);
+const previousSnapshot = await readPreviousSnapshot();
 const COUNTRY_CODES = `
 AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ
 BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BV BW BY BZ
@@ -47,11 +48,12 @@ const [ecb, fallback] = await Promise.all([
   fetchJson(ECB_RATE_URL, false, 3),
   fetchJson(FALLBACK_RATE_URL, false, 3),
 ]);
-const snapshot = validateSnapshot(buildWebSnapshot(configs, ecb, fallback, new Date().toISOString(), {
+const freshSnapshot = buildWebSnapshot(configs, ecb, fallback, new Date().toISOString(), {
   requested: COUNTRY_CODES.length,
   unsupported: unsupported.length,
   failed: failed.length,
-}));
+});
+const snapshot = validateSnapshot(retainFailedRows(freshSnapshot, previousSnapshot, failed.map((item) => item.code)));
 const plus = snapshot.plans.find((plan) => plan.id === "chatgpt-plus");
 const go = snapshot.plans.find((plan) => plan.id === "chatgpt-go");
 const proLite = snapshot.plans.find((plan) => plan.id === "chatgpt-prolite");
@@ -64,7 +66,7 @@ if ([go, plus, proLite, pro].some((plan) => !plan || plan.rows.length < 20)) {
 }
 
 await writeFile(outputUrl, `${JSON.stringify(snapshot, null, 2)}\n`, "utf8");
-console.log(`采集完成：${snapshot.plans.map((plan) => `${plan.shortName} ${plan.rows.length}`).join("，")}；不支持 ${unsupported.length}；失败 ${failed.length}`);
+console.log(`采集完成：${snapshot.plans.map((plan) => `${plan.shortName} ${plan.rows.length}`).join("，")}；不支持 ${unsupported.length}；失败 ${failed.length}；沿用 ${snapshot.collectionScope.retained || 0}`);
 if (failed.length) console.warn(`失败地区：${failed.slice(0, 12).map((item) => item.code).join(", ")}`);
 
 async function fetchJson(url, openAiHeaders = true, retries = 1) {
@@ -114,4 +116,12 @@ async function mapLimit(items, limit, mapper) {
     }
   }
   await Promise.all(Array.from({ length: Math.min(limit, items.length) }, () => worker()));
+}
+
+async function readPreviousSnapshot() {
+  try {
+    return JSON.parse(await readFile(outputUrl, "utf8"));
+  } catch {
+    return null;
+  }
 }

@@ -89,6 +89,30 @@ export function buildWebSnapshot(configs, ecb, fallback, collectedAt = new Date(
   };
 }
 
+export function retainFailedRows(snapshot, previousSnapshot, failedCodes) {
+  if (previousSnapshot?.collectionScope?.evidencePlan !== "consumer" || !Array.isArray(previousSnapshot.plans)) {
+    return snapshot;
+  }
+  const failed = new Set(failedCodes);
+  const retainedCountries = new Set();
+  const plans = snapshot.plans.map((plan) => {
+    const currentCountries = new Set(plan.rows.map((row) => row.countryCode));
+    const previousPlan = previousSnapshot.plans.find((item) => item.id === plan.id);
+    const retainedRows = (previousPlan?.rows || [])
+      .filter((row) => failed.has(row.countryCode) && !currentCountries.has(row.countryCode))
+      .map((row) => {
+        retainedCountries.add(row.countryCode);
+        return { ...row, freshness: "retained" };
+      });
+    return { ...plan, rows: [...plan.rows, ...retainedRows] };
+  });
+  return {
+    ...snapshot,
+    collectionScope: { ...snapshot.collectionScope, retained: retainedCountries.size },
+    plans,
+  };
+}
+
 function createCnyRateResolver(ecb, fallback) {
   if (ecb?.base !== "EUR" || !Number.isFinite(ecb.rates?.CNY)) throw new Error("ECB 汇率无效");
   if (fallback?.result !== "success" || !Number.isFinite(fallback.rates?.CNY)) throw new Error("备用汇率无效");

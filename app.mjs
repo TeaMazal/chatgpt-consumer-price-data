@@ -240,7 +240,8 @@ function noticeText(plan) {
   if (!plan) return "价格来自 OpenAI 官方公开页面，汇率来自欧洲央行。";
   const scope = state.snapshot.collectionScope;
   if (scope?.evidencePlan === "consumer") {
-    return `${plan.shortName} 已从 OpenAI 官方 Web 接口采集 ${plan.rows.length} 个地区；请求 ${scope.requested}，不支持 ${scope.unsupported || 0}，本次失败 ${scope.failed || 0}。`;
+    const retained = scope.retained ? `，沿用上次成功 ${scope.retained}` : "";
+    return `${plan.shortName} 已收录 ${plan.rows.length} 个地区；本次成功 ${scope.reachable}/${scope.requested}，不支持 ${scope.unsupported || 0}，失败 ${scope.failed || 0}${retained}。`;
   }
   if (plan.channel === "ios") {
     const reachable = scope?.reachable;
