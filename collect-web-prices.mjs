@@ -40,6 +40,21 @@ await mapLimit(COUNTRY_CODES, 4, async (code) => {
   }
 });
 
+if (failed.length) {
+  const firstPassFailures = failed.splice(0);
+  console.log(`开始串行补采首轮失败地区：${firstPassFailures.map((item) => item.code).join(", ")}`);
+  for (const item of firstPassFailures) {
+    try {
+      const config = await fetchJson(`${CONFIG_URL}/${item.code}`, true, 4);
+      if (config === null) unsupported.push(item.code);
+      else configs.push(config);
+    } catch (error) {
+      failed.push({ code: item.code, message: error instanceof Error ? error.message : String(error) });
+    }
+    await new Promise((resolve) => setTimeout(resolve, 350));
+  }
+}
+
 if (configs.length < 180) {
   throw new Error(`采集保护未通过：仅成功 ${configs.length}/${COUNTRY_CODES.length} 个地区，旧快照保持不变`);
 }
