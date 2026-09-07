@@ -1,4 +1,4 @@
-import { fetchLiveSnapshot } from "./data-loader.mjs?v=local-pipeline1";
+import { fetchLiveSnapshot } from "./data-loader.mjs?v=global-pipeline1";
 import {
   comparisonPercent,
   convertCny,
@@ -10,7 +10,7 @@ import {
   originalPriceLabel,
   taxedCny,
   validateSnapshot,
-} from "./price-utils.mjs?v=local-pipeline1";
+} from "./price-utils.mjs?v=global-pipeline1";
 
 const state = {
   snapshot: null,
@@ -109,7 +109,7 @@ async function refreshLiveData(silent) {
   setSourceState("正在刷新", "loading");
   try {
     applySnapshot(validateSnapshot(await fetchLiveSnapshot()));
-    setSourceState("真实数据", "live");
+    setSourceState(state.snapshot.collectionScope?.evidencePlan === "consumer" ? "全球真实数据" : "真实数据", "live");
     refs.noticeTitle.textContent = "官方渠道数据已刷新";
     refs.noticeBody.textContent = noticeText(currentPlan());
     refs.noticeTag.textContent = "可核验来源";
@@ -238,8 +238,12 @@ function taxLabel(row) {
 
 function noticeText(plan) {
   if (!plan) return "价格来自 OpenAI 官方公开页面，汇率来自欧洲央行。";
+  const scope = state.snapshot.collectionScope;
+  if (scope?.evidencePlan === "consumer") {
+    return `${plan.shortName} 已从 OpenAI 官方 Web 接口采集 ${plan.rows.length} 个地区；请求 ${scope.requested}，不支持 ${scope.unsupported || 0}，本次失败 ${scope.failed || 0}。`;
+  }
   if (plan.channel === "ios") {
-    const reachable = state.snapshot.collectionScope?.reachable;
+    const reachable = scope?.reachable;
     return `${plan.shortName} 当前已核验 ${plan.rows.length} 个地区；接口已探测 ${reachable || "--"} 个地区，等待 GitHub 采集消费者套餐。`;
   }
   return `${plan.shortName} 来自 OpenAI 官方 Web 定价页；目前只展示已人工核验的日本区。`;

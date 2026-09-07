@@ -2,6 +2,7 @@ export const APPLE_PRICE_URL = "https://raw.githubusercontent.com/psdrbhy/all-us
 export const ECB_RATE_URL = "https://api.frankfurter.dev/v1/latest?base=EUR";
 export const FALLBACK_RATE_URL = "https://open.er-api.com/v6/latest/USD";
 export const BUSINESS_SCOPE_URL = "https://48team.hualabtech.com/data/prices.json";
+export const CONSUMER_SNAPSHOT_URL = "https://raw.githubusercontent.com/TeaMazal/chatgpt-consumer-price-data/main/data/live-prices.json";
 
 const COUNTRY_NAMES = {
   AR: "阿根廷", AU: "澳大利亚", BR: "巴西", CA: "加拿大", DE: "德国", DK: "丹麦",
@@ -14,6 +15,20 @@ const WEB_VERIFIED_AT = "2026-09-07T06:50:00Z";
 const WEB_PRICE_URL = "https://chatgpt.com/zh-Hans-CN/pricing/";
 
 export async function fetchLiveSnapshot(fetchImpl = fetch) {
+  try {
+    const consumerSnapshot = await fetchJson(fetchImpl, CONSUMER_SNAPSHOT_URL);
+    if (
+      consumerSnapshot?.version === 2
+      && consumerSnapshot?.mode === "live"
+      && consumerSnapshot?.collectionScope?.evidencePlan === "consumer"
+      && consumerSnapshot?.plans?.length === 4
+    ) {
+      return consumerSnapshot;
+    }
+  } catch {
+    // Fall back to the last locally verifiable sources when GitHub is unavailable.
+  }
+
   const [apple, ecb, fallback, scope] = await Promise.all([
     fetchJson(fetchImpl, APPLE_PRICE_URL),
     fetchJson(fetchImpl, ECB_RATE_URL),
